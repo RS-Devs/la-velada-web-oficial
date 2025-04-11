@@ -2,18 +2,591 @@
 import Layout from '@/layouts/Layout.astro'
 import { porra } from '@/consts/pageTitles'
 import BackgroundLayout from '@/layouts/BackgroundLayout.astro'
+import { COMBATS } from '@/consts/combats'
+import { FIGHTERS } from '@/consts/fighters'
+import { countries } from '@/consts/countries'
+import OptimizedImage from '@/components/OptimizedImage.astro'
+import EstadisticasCombate from '@/components/EstadisticasCombate.astro'
+import Sponsors from '@/components/Sponsors.astro'
+import Footer from '@/components/Footer.astro'
+
+// Obtener los combates con los datos completos de los luchadores
+const combates = COMBATS.map(combate => {
+  const luchador1 = FIGHTERS.find(f => f.id === combate.fighters[0])
+  const luchador2 = FIGHTERS.find(f => f.id === combate.fighters[1])
+  
+  // Obtener países de los luchadores
+  const pais1 = luchador1 ? countries.find(c => c.id === luchador1.country) : null
+  const pais2 = luchador2 ? countries.find(c => c.id === luchador2.country) : null
+  
+  return {
+    ...combate,
+    luchador1,
+    luchador2,
+    pais1,
+    pais2,
+  }
+}).filter(combate => combate.luchador1 && combate.luchador2) // Filtrar combates con luchadores válidos
 ---
 
 <Layout title={porra}>
-  <BackgroundLayout>
-    <header
-      class="absolute top-28 mx-auto flex min-h-screen w-full flex-col items-center justify-start gap-4"
-    >
-      <h2
-        class="animate-fade-in animate-delay-300 bg-gradient-to-r from-sky-100 to-pink-300 bg-clip-text text-center text-2xl font-bold text-transparent drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]"
-      >
-        PARTICIPA EN LA PORRA
-      </h2>
-    </header>
+  <BackgroundLayout customGradient="">
+    <div class="pt-28 pb-16 px-4 w-full max-w-6xl mx-auto">
+      <header class="text-center mb-10">
+        <h1 class="animate-fade-in animate-delay-300 bg-gradient-to-r from-sky-100 to-pink-300 bg-clip-text text-4xl font-bold text-transparent drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] mb-4">
+          PARTICIPA EN LA PORRA
+        </h1>
+        <p class="text-theme-seashell max-w-2xl mx-auto relative z-10 text-lg font-medium drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+          Predice los resultados de los combates de La Velada V y comparte tus pronósticos con la comunidad.
+          <span class="absolute -inset-1 -z-10 blur-md bg-theme-turquoise/20 rounded-lg"></span>
+        </p>
+      </header>
+      
+      <!-- Sección de usuario autenticado -->
+      <div id="user-info" class="bg-black/70 rounded-lg p-6 shadow-lg p-6 shadow-lg hidden">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <img id="user-avatar" src="" alt="Avatar" class="w-12 h-12 rounded-full mr-4" />
+            <div>
+              <p class="text-theme-seashell">Bienvenido, <span id="user-name" class="font-bold"></span></p>
+              <p class="text-theme-seashell text-sm">Ya puedes participar en la porra</p>
+            </div>
+          </div>
+          <button 
+            id="logout-button"
+            class="bg-gray-700 text-white py-2 px-4 rounded hover:bg-gray-600 transition-all"
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+      
+      <!-- Formulario de pronósticos -->
+      <div id="form-container" class="bg-black/80 rounded-lg p-6 shadow-lg hidden">
+        <form id="porraForm" class="space-y-8">
+          <!-- Sección de combates -->
+          <div class="space-y-6">
+            <h2 class="text-xl text-theme-turquoise font-bold border-b border-theme-turquoise/30 pb-2">
+              Pronósticos de combates
+            </h2>
+            
+            <div class="grid gap-8">
+              {combates.map((combate, index) => (
+                <div class="bg-gray-900/70 border border-theme-turquoise/30 rounded-lg overflow-hidden">
+                  <div class="bg-theme-turquoise/20 p-3 border-b border-theme-turquoise/30">
+                    <h3 class="text-theme-seashell text-lg font-bold text-center">
+                      {combate.title}
+                    </h3>
+                  </div>
+                  
+                  <div class="p-4">
+                    <div class="flex items-center justify-between mb-6">
+                      <div class="flex flex-col items-center">
+                        <div class="relative w-20 h-20 rounded-full overflow-hidden mb-2 bg-gray-800 border-2 border-theme-turquoise shadow-lg transform hover:scale-105 transition-transform">
+                          <OptimizedImage
+                            src={`/images/fighters/cards/${combate.luchador1.id}.webp`}
+                            alt={combate.luchador1.name}
+                            class="w-full h-full object-cover"
+                            width={80}
+                            height={80}
+                          />
+                        </div>
+                        <span class="text-theme-seashell font-bold">{combate.luchador1.name}</span>
+                        {combate.pais1 && (
+                          <div class="mt-1 w-6 h-6 rounded-full overflow-hidden border border-white shadow-md">
+                            <img 
+                              src={combate.pais1.image.src} 
+                              alt={`Bandera de ${combate.pais1.name}`}
+                              class="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <span class="text-theme-turquoise font-bold text-xl">VS</span>
+                      
+                      <div class="flex flex-col items-center">
+                        <div class="relative w-20 h-20 rounded-full overflow-hidden mb-2 bg-gray-800 border-2 border-theme-tickle-me-pink shadow-lg transform hover:scale-105 transition-transform">
+                          <OptimizedImage
+                            src={`/images/fighters/cards/${combate.luchador2.id}.webp`}
+                            alt={combate.luchador2.name}
+                            class="w-full h-full object-cover"
+                            width={80}
+                            height={80}
+                          />
+                        </div>
+                        <span class="text-theme-seashell font-bold">{combate.luchador2.name}</span>
+                        {combate.pais2 && (
+                          <div class="mt-1 w-6 h-6 rounded-full overflow-hidden border border-white shadow-md">
+                            <img 
+                              src={combate.pais2.image.src} 
+                              alt={`Bandera de ${combate.pais2.name}`}
+                              class="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                      <div>
+                        <label class="block text-theme-seashell mb-2">¿Quién ganará?</label>
+                        <div class="grid grid-cols-2 gap-3">
+                          <label class="fighter-option flex items-center bg-gray-800 p-3 rounded cursor-pointer hover:bg-gray-700 transition border border-transparent hover:border-theme-turquoise">
+                            <input 
+                              type="radio" 
+                              name={`ganador-${combate.id}`} 
+                              value={combate.luchador1.id}
+                              class="mr-2 accent-theme-turquoise"
+                              required
+                            />
+                            <span class="text-white">{combate.luchador1.name}</span>
+                          </label>
+                          <label class="fighter-option flex items-center bg-gray-800 p-3 rounded cursor-pointer hover:bg-gray-700 transition border border-transparent hover:border-theme-tickle-me-pink">
+                            <input 
+                              type="radio" 
+                              name={`ganador-${combate.id}`} 
+                              value={combate.luchador2.id}
+                              class="mr-2 accent-theme-tickle-me-pink"
+                              required
+                            />
+                            <span class="text-white">{combate.luchador2.name}</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label class="block text-theme-seashell mb-2">¿Cómo ganará?</label>
+                        <select 
+                          name={`metodo-${combate.id}`} 
+                          class="w-full bg-gray-800 text-white p-3 rounded border border-gray-700"
+                          required
+                        >
+                          <option value="">Selecciona un método</option>
+                          <option value="ko">KO / TKO</option>
+                          <option value="decision">Decisión</option>
+                          <option value="descalificacion">Descalificación</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label class="block text-theme-seashell mb-2">¿En qué ronda?</label>
+                        <select 
+                          name={`ronda-${combate.id}`} 
+                          class="w-full bg-gray-800 text-white p-3 rounded border border-gray-700"
+                          required
+                        >
+                          <option value="">Selecciona una ronda</option>
+                          <option value="1">Ronda 1</option>
+                          <option value="2">Ronda 2</option>
+                          <option value="3">Ronda 3</option>
+                          <option value="decision">Decisión (todas las rondas)</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <!-- Estadísticas del combate -->
+                    <div class="mt-6 border-t-2 border-theme-tickle-me-pink/30 pt-4">
+                      <EstadisticasCombate 
+                        combateId={combate.id} 
+                        luchador1={combate.luchador1} 
+                        luchador2={combate.luchador2} 
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <!-- Botón de envío -->
+          <div class="text-center">
+            <button 
+              type="submit" 
+              class="bg-theme-turquoise text-black font-bold py-3 px-10 rounded-lg hover:bg-theme-turquoise/80 transition-all transform hover:scale-105"
+            >
+              Enviar mis pronósticos
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Mensaje para usuarios no autenticados -->
+      <div id="not-authenticated-message" class="hidden">
+        <div class="bg-black/70 rounded-lg p-6 shadow-lg text-center">
+          <h2 class="text-2xl text-theme-turquoise font-bold mb-4">Participa en la porra</h2>
+          <p class="text-theme-seashell mb-6">
+            Para participar en la porra de La Velada V, necesitas iniciar sesión con tu cuenta de Twitch.
+          </p>
+          <button 
+            id="login-button-alt"
+            class="bg-[#9146FF] text-white font-bold py-3 px-10 rounded-lg hover:bg-[#7d3bdf] transition-all transform hover:scale-105 flex items-center mx-auto"
+          >
+            <svg class="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/>
+            </svg>
+            Iniciar sesión con Twitch
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Añadir el componente de patrocinadores -->
   </BackgroundLayout>
 </Layout>
+
+<script>
+  import { isAuthenticated, getCurrentUser, loginWithTwitch, logout } from '@/services/auth';
+  import { guardarPronostico, obtenerPronosticoUsuario } from '@/services/porra';
+  import type { Pronostico } from '@/services/porra';
+
+  // Función para inicializar la página
+  const initPage = () => {
+    const authSection = document.getElementById('auth-section');
+    const userInfo = document.getElementById('user-info');
+    const formContainer = document.getElementById('form-container');
+    const notAuthenticatedMessage = document.getElementById('not-authenticated-message');
+    const form = document.getElementById('porraForm') as HTMLFormElement;
+    const loginButton = document.getElementById('login-button');
+    const loginButtonAlt = document.getElementById('login-button-alt');
+    const logoutButton = document.getElementById('logout-button');
+    
+    // Comprobar si el usuario está autenticado
+    const checkAuth = () => {
+      if (isAuthenticated()) {
+        // Usuario autenticado
+        const user = getCurrentUser();
+        
+        if (user) {
+          // Mostrar información del usuario
+          if (userInfo) {
+            const userAvatar = userInfo.querySelector('#user-avatar') as HTMLImageElement;
+            const userName = userInfo.querySelector('#user-name');
+            
+            if (userAvatar) userAvatar.src = user.profile_image_url;
+            if (userName) userName.textContent = user.display_name;
+            
+            userInfo.classList.remove('hidden');
+          }
+          
+          // Mostrar formulario
+          if (formContainer) formContainer.classList.remove('hidden');
+          
+          // Ocultar sección de autenticación y mensaje
+          if (authSection) authSection.classList.add('hidden');
+          if (notAuthenticatedMessage) notAuthenticatedMessage.classList.add('hidden');
+          
+          // Cargar pronósticos existentes del usuario
+          const pronosticoUsuario = obtenerPronosticoUsuario(user.id);
+          if (pronosticoUsuario && form) {
+            pronosticoUsuario.pronosticos.forEach(pronostico => {
+              // Marcar ganador
+              const ganadorInput = form.querySelector(`input[name="ganador-${pronostico.combateId}"][value="${pronostico.ganadorId}"]`) as HTMLInputElement;
+              if (ganadorInput) ganadorInput.checked = true;
+              
+              // Seleccionar método
+              const metodoSelect = form.querySelector(`select[name="metodo-${pronostico.combateId}"]`) as HTMLSelectElement;
+              if (metodoSelect) metodoSelect.value = pronostico.metodo;
+              
+              // Seleccionar ronda
+              const rondaSelect = form.querySelector(`select[name="ronda-${pronostico.combateId}"]`) as HTMLSelectElement;
+              if (rondaSelect) rondaSelect.value = pronostico.ronda;
+            });
+          }
+        }
+      } else {
+        // Usuario no autenticado
+        if (authSection) authSection.classList.remove('hidden');
+        if (notAuthenticatedMessage) notAuthenticatedMessage.classList.remove('hidden');
+        
+        // Ocultar información del usuario y formulario
+        if (userInfo) userInfo.classList.add('hidden');
+        if (formContainer) formContainer.classList.add('hidden');
+      }
+    };
+    
+    // Comprobar autenticación al cargar la página
+    checkAuth();
+    
+    // Comprobar si hay un error de autenticación en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('error') === 'auth') {
+      alert('Ha ocurrido un error durante la autenticación. Por favor, inténtalo de nuevo.');
+    }
+    
+    // Eventos de botones de inicio de sesión
+    if (loginButton) {
+      loginButton.addEventListener('click', () => {
+        loginWithTwitch();
+      });
+    }
+    
+    if (loginButtonAlt) {
+      loginButtonAlt.addEventListener('click', () => {
+        loginWithTwitch();
+      });
+    }
+    
+    // Evento de botón de cierre de sesión
+    if (logoutButton) {
+      logoutButton.addEventListener('click', () => {
+        logout();
+        checkAuth();
+      });
+    }
+    
+    // Manejar envío del formulario
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Verificar autenticación
+        if (!isAuthenticated()) {
+          alert('Debes iniciar sesión para enviar tus pronósticos');
+          return;
+        }
+        
+        const user = getCurrentUser();
+        if (!user) {
+          alert('Error al obtener información del usuario. Por favor, inicia sesión de nuevo.');
+          return;
+        }
+        
+        // Mostrar indicador de carga
+        const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+        const originalButtonText = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = 'Enviando...';
+        
+        try {
+          // Recoger los datos del formulario
+          const formData = new FormData(form);
+          const entries = Array.from(formData.entries());
+          
+          // Organizar pronósticos por combate
+          const combateMap = new Map<string, Pronostico>();
+          
+          entries.forEach(([key, value]) => {
+            if (typeof value !== 'string') return;
+            
+            // Extraer el ID del combate y el tipo de dato (ganador, método, ronda)
+            const match = key.match(/^(ganador|metodo|ronda)-(.+)$/);
+            if (!match) return;
+            
+            const [, tipo, combateId] = match;
+            
+            // Obtener o crear el pronóstico para este combate
+            if (!combateMap.has(combateId)) {
+              combateMap.set(combateId, {
+                combateId,
+                ganadorId: '',
+                metodo: '',
+                ronda: '',
+              });
+            }
+            
+            const pronostico = combateMap.get(combateId)!;
+            
+            // Asignar el valor según el tipo
+            if (tipo === 'ganador') {
+              pronostico.ganadorId = value;
+            } else if (tipo === 'metodo') {
+              pronostico.metodo = value;
+            } else if (tipo === 'ronda') {
+              pronostico.ronda = value;
+            }
+          });
+          
+          // Convertir a array de pronósticos
+          const pronosticos = Array.from(combateMap.values());
+          
+          // Guardar pronósticos
+          const guardado = guardarPronostico(user, pronosticos);
+          
+          if (!guardado) {
+            throw new Error('Error al guardar los pronósticos');
+          }
+          
+          // Mostrar mensaje de éxito
+          const successMessage = document.createElement('div');
+          successMessage.className = 'fixed inset-0 flex items-center justify-center bg-black/80 z-50';
+          successMessage.innerHTML = `
+            <div class="bg-gray-900 p-8 rounded-lg max-w-md text-center">
+              <h3 class="text-theme-turquoise text-2xl font-bold mb-4">¡Pronósticos enviados!</h3>
+              <p class="text-theme-seashell mb-6">Gracias por participar en la porra de La Velada V.</p>
+              <button id="closeSuccess" class="bg-theme-turquoise text-black font-bold py-2 px-6 rounded hover:bg-theme-turquoise/80">
+                Cerrar
+              </button>
+            </div>
+          `;
+          
+          document.body.appendChild(successMessage);
+          
+          // Cerrar el mensaje al hacer clic en el botón
+          document.getElementById('closeSuccess')?.addEventListener('click', () => {
+            document.body.removeChild(successMessage);
+            
+            // Actualizar las estadísticas sin recargar la página
+            const estadisticasElements = document.querySelectorAll('[id^="estadisticas-"]');
+            estadisticasElements.forEach(el => {
+              // Forzar actualización de las estadísticas
+              el.classList.add('refresh-stats');
+              setTimeout(() => el.classList.remove('refresh-stats'), 100);
+            });
+          });
+          
+        } catch (error) {
+          console.error('Error al enviar los pronósticos:', error);
+          alert('Ha ocurrido un error al enviar tus pronósticos. Por favor, inténtalo de nuevo.');
+        } finally {
+          // Restaurar el botón
+          submitButton.disabled = false;
+          submitButton.textContent = originalButtonText;
+        }
+      });
+    }
+  };
+
+  // Inicializar la página cuando se carga el DOM
+  document.addEventListener('DOMContentLoaded', initPage);
+  
+  // Reinicializar cuando se vuelve a la página (para Astro View Transitions)
+  document.addEventListener('astro:page-load', initPage);
+  
+  // También reinicializar cuando se completa una transición
+  document.addEventListener('astro:after-swap', initPage);
+  
+  // Función para resaltar visualmente la selección de luchadores
+  const highlightSelectedFighters = () => {
+    const radioInputs = document.querySelectorAll('input[type="radio"][name^="ganador-"]');
+    
+    radioInputs.forEach(input => {
+      input.addEventListener('change', () => {
+        const combateId = (input as HTMLInputElement).name.split('-')[1];
+        const luchadorId = (input as HTMLInputElement).value;
+        
+        // Resaltar la imagen del luchador seleccionado
+        const luchadorImagen = document.querySelector(`.w-20.h-20.rounded-full img[src$="${luchadorId}.webp"]`);
+        if (luchadorImagen) {
+          const contenedor = luchadorImagen.closest('.w-20.h-20');
+          
+          // Quitar resaltado de todas las imágenes de este combate
+          const todasImagenes = document.querySelectorAll(`[name="ganador-${combateId}"]`);
+          todasImagenes.forEach(radio => {
+            const id = (radio as HTMLInputElement).value;
+            const img = document.querySelector(`.w-20.h-20.rounded-full img[src$="${id}.webp"]`);
+            if (img) {
+              const cont = img.closest('.w-20.h-20');
+              cont.classList.remove('ring-4', 'ring-theme-turquoise', 'ring-theme-tickle-me-pink');
+            }
+          });
+          
+          // Añadir resaltado a la imagen seleccionada
+          if (luchadorId === (document.querySelector(`[name="ganador-${combateId}"]`) as HTMLInputElement).value) {
+            contenedor.classList.add('ring-4', 'ring-theme-turquoise');
+          } else {
+            contenedor.classList.add('ring-4', 'ring-theme-tickle-me-pink');
+          }
+        }
+      });
+    });
+  };
+  
+  // Ejecutar la función cuando se carga la página
+  document.addEventListener('DOMContentLoaded', highlightSelectedFighters);
+  document.addEventListener('astro:page-load', highlightSelectedFighters);
+</script>
+
+<style>
+  /* Estilos para las opciones de luchadores */
+  .fighter-option input[type="radio"]:checked + span {
+    font-weight: bold;
+  }
+  
+  /* Estilos para la opción seleccionada del primer luchador */
+  .fighter-option:nth-child(1) input[type="radio"]:checked ~ * {
+    color: var(--color-theme-turquoise);
+  }
+  
+  .fighter-option:nth-child(1) input[type="radio"]:checked {
+    accent-color: var(--color-theme-turquoise);
+  }
+  
+  .fighter-option:nth-child(1) input[type="radio"]:checked + span {
+    text-shadow: 0 0 8px rgba(var(--color-theme-turquoise-rgb), 0.5);
+  }
+  
+  /* Estilos para la opción seleccionada del segundo luchador */
+  .fighter-option:nth-child(2) input[type="radio"]:checked ~ * {
+    color: var(--color-theme-tickle-me-pink);
+  }
+  
+  .fighter-option:nth-child(2) input[type="radio"]:checked {
+    accent-color: var(--color-theme-tickle-me-pink);
+  }
+  
+  .fighter-option:nth-child(2) input[type="radio"]:checked + span {
+    text-shadow: 0 0 8px rgba(var(--color-theme-tickle-me-pink-rgb), 0.5);
+  }
+  
+  /* Estilos para las opciones seleccionadas */
+  .fighter-option input[type="radio"]:checked + span {
+    font-weight: bold;
+  }
+  
+  /* Estilos para los bordes de las imágenes */
+  .fighter-option:nth-child(1) input[type="radio"]:checked ~ .border-theme-turquoise {
+    box-shadow: 0 0 15px var(--color-theme-turquoise);
+  }
+  
+  .fighter-option:nth-child(2) input[type="radio"]:checked ~ .border-theme-tickle-me-pink {
+    box-shadow: 0 0 15px var(--color-theme-tickle-me-pink);
+  }
+  
+  /* Mejora del contraste para los elementos */
+  #form-container {
+    background-color: rgba(0, 0, 0, 0.85);
+  }
+  
+  .bg-gray-900\/70 {
+    background-color: rgba(17, 24, 39, 0.85);
+    border-left: 3px solid var(--color-theme-tickle-me-pink);
+  }
+  
+  .bg-theme-turquoise\/20 {
+    background-color: rgba(var(--color-theme-turquoise-rgb), 0.3);
+  }
+  
+  /* Añadir línea decorativa rosa para separar secciones */
+  .space-y-4 > div:not(:last-child)::after {
+    content: '';
+    display: block;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--color-theme-tickle-me-pink), transparent);
+    margin-top: 1rem;
+  }
+  
+  /* Mejorar la visualización de las banderas */
+  .absolute.-bottom-1.-right-1 {
+    z-index: 10;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Añadir un efecto de brillo al pasar el cursor sobre las tarjetas de combate */
+  .bg-gray-900\/70:hover {
+    box-shadow: 0 0 15px rgba(var(--color-theme-tickle-me-pink-rgb), 0.3);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  /* Resto de estilos existentes */
+  .fighter-option input[type="radio"]:checked + span {
+    font-weight: bold;
+  }
+  
+  /* Estilos para la opción seleccionada del primer luchador */
+  .fighter-option:nth-child(1) input[type="radio"]:checked ~ * {
+    color: var(--color-theme-turquoise);
+  }
+  
+  /* ... resto de estilos ... */
+</style>

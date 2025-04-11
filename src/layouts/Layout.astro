@@ -93,8 +93,11 @@ const { title = fixedTitle } = Astro.props
     <main>
       <slot />
     </main>
-    <Sponsors />
-    <Footer />
+    <!-- Movemos estos componentes fuera del BackgroundLayout -->
+    <div class="sponsors-footer-container">
+      <Sponsors />
+      <Footer />
+    </div>
   </body>
 </html>
 
@@ -107,5 +110,14 @@ const { title = fixedTitle } = Astro.props
     background: #f19fca;
     display: flex;
     flex-direction: column;
+  }
+
+  /* Estilo para el contenedor de patrocinadores y footer */
+  .sponsors-footer-container {
+    position: relative;
+    z-index: 20;
+    background: #f19fca;
+    width: 100%;
+    padding-top: 2rem;
   }
 </style>

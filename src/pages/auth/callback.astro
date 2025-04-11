@@ -1,0 +1,33 @@
+---
+import Layout from '@/layouts/Layout.astro'
+---
+
+<Layout title="Autenticación con Twitch">
+  <div class="flex items-center justify-center min-h-screen bg-black">
+    <div class="text-center">
+      <h1 class="text-2xl text-theme-turquoise mb-4">Procesando autenticación...</h1>
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-theme-turquoise mx-auto"></div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { handleTwitchCallback } from '@/services/auth';
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const user = await handleTwitchCallback();
+      
+      if (user) {
+        // Redirigir a la página de la porra
+        window.location.href = '/la-porra';
+      } else {
+        // Error en la autenticación
+        window.location.href = '/la-porra?error=auth';
+      }
+    } catch (error) {
+      console.error('Error en el callback:', error);
+      window.location.href = '/la-porra?error=auth';
+    }
+  });
+</script>

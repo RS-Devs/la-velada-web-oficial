@@ -1,0 +1,344 @@
+---
+import { obtenerEstadisticasCombate } from '@/services/porra';
+
+interface Props {
+  combateId: string;
+  luchador1: {
+    id: string;
+    name: string;
+  };
+  luchador2: {
+    id: string;
+    name: string;
+  };
+}
+
+const { combateId, luchador1, luchador2 } = Astro.props;
+
+// Obtener estadísticas iniciales (para SSR)
+const estadisticas = obtenerEstadisticasCombate(combateId);
+
+// Porcentajes de victoria
+const porcentajeLuchador1 = estadisticas.ganadores[luchador1.id] || 0;
+const porcentajeLuchador2 = estadisticas.ganadores[luchador2.id] || 0;
+
+// Métodos de victoria
+const metodos = {
+  ko: estadisticas.metodos['ko'] || 0,
+  decision: estadisticas.metodos['decision'] || 0,
+  descalificacion: estadisticas.metodos['descalificacion'] || 0,
+};
+
+// Rondas
+const rondas = {
+  '1': estadisticas.rondas['1'] || 0,
+  '2': estadisticas.rondas['2'] || 0,
+  '3': estadisticas.rondas['3'] || 0,
+  'decision': estadisticas.rondas['decision'] || 0,
+};
+
+// Formatear porcentajes
+const formatPorcentaje = (valor: number) => {
+  return `${Math.round(valor)}%`;
+};
+
+// Determinar si hay pronósticos
+const hayPronosticos = estadisticas.total > 0;
+---
+
+<div id={`estadisticas-${combateId}`} class="bg-gray-900/70 rounded-lg p-5 border border-theme-turquoise/30 mt-4">
+  <h3 class="text-xl text-theme-turquoise font-bold mb-4 text-center">Estadísticas de la comunidad</h3>
+  
+  <div class="estadisticas-contenido">
+    {!hayPronosticos ? (
+      <p class="text-center text-theme-seashell">Aún no hay pronósticos para este combate.</p>
+    ) : (
+      <div>
+        <p class="text-center text-theme-seashell mb-4">
+          <span class="font-bold">{estadisticas.total}</span> {estadisticas.total === 1 ? 'persona ha votado' : 'personas han votado'}
+        </p>
+        
+        <!-- Porcentajes de victoria -->
+        <div class="mb-6">
+          <h4 class="text-theme-seashell font-bold mb-2">¿Quién ganará?</h4>
+          
+          <div class="flex justify-between text-sm text-theme-seashell mb-1">
+            <span>{luchador1.name}</span>
+            <span>{luchador2.name}</span>
+          </div>
+          
+          <div class="relative h-8 bg-gray-800 rounded-full overflow-hidden">
+            <!-- Barra del luchador 1 -->
+            <div 
+              class="absolute left-0 top-0 h-full bg-theme-turquoise"
+              style={`width: ${porcentajeLuchador1}%`}
+            ></div>
+            
+            <!-- Barra del luchador 2 -->
+            <div 
+              class="absolute right-0 top-0 h-full bg-theme-tickle-me-pink"
+              style={`width: ${porcentajeLuchador2}%`}
+            ></div>
+            
+            <!-- Porcentajes -->
+            <div class="absolute inset-0 flex justify-center items-center">
+              <span class="text-white font-bold text-sm">
+                {formatPorcentaje(porcentajeLuchador1)} vs {formatPorcentaje(porcentajeLuchador2)}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Métodos de victoria y rondas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Métodos de victoria -->
+          <div>
+            <h4 class="text-theme-seashell font-bold mb-2">Método de victoria</h4>
+            
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-theme-seashell">KO / TKO</span>
+                <div class="flex items-center">
+                  <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                    <div class="h-full bg-theme-turquoise" style={`width: ${metodos.ko}%`}></div>
+                  </div>
+                  <span class="text-theme-seashell">{formatPorcentaje(metodos.ko)}</span>
+                </div>
+              </div>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-theme-seashell">Decisión</span>
+                <div class="flex items-center">
+                  <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                    <div class="h-full bg-theme-turquoise" style={`width: ${metodos.decision}%`}></div>
+                  </div>
+                  <span class="text-theme-seashell">{formatPorcentaje(metodos.decision)}</span>
+                </div>
+              </div>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-theme-seashell">Descalificación</span>
+                <div class="flex items-center">
+                  <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                    <div class="h-full bg-theme-turquoise" style={`width: ${metodos.descalificacion}%`}></div>
+                  </div>
+                  <span class="text-theme-seashell">{formatPorcentaje(metodos.descalificacion)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Rondas -->
+          <div>
+            <h4 class="text-theme-seashell font-bold mb-2">Ronda de finalización</h4>
+            
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-theme-seashell">Ronda 1</span>
+                <div class="flex items-center">
+                  <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                    <div class="h-full bg-theme-turquoise" style={`width: ${rondas['1']}%`}></div>
+                  </div>
+                  <span class="text-theme-seashell">{formatPorcentaje(rondas['1'])}</span>
+                </div>
+              </div>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-theme-seashell">Ronda 2</span>
+                <div class="flex items-center">
+                  <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                    <div class="h-full bg-theme-turquoise" style={`width: ${rondas['2']}%`}></div>
+                  </div>
+                  <span class="text-theme-seashell">{formatPorcentaje(rondas['2'])}</span>
+                </div>
+              </div>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-theme-seashell">Ronda 3</span>
+                <div class="flex items-center">
+                  <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                    <div class="h-full bg-theme-turquoise" style={`width: ${rondas['3']}%`}></div>
+                  </div>
+                  <span class="text-theme-seashell">{formatPorcentaje(rondas['3'])}</span>
+                </div>
+              </div>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-theme-seashell">Todas las rondas</span>
+                <div class="flex items-center">
+                  <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                    <div class="h-full bg-theme-turquoise" style={`width: ${rondas['decision']}%`}></div>
+                  </div>
+                  <span class="text-theme-seashell">{formatPorcentaje(rondas['decision'])}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+</div>
+
+<script define:vars={{ combateId, luchador1, luchador2 }}>
+  // Esta función se ejecutará en el cliente para actualizar las estadísticas
+  function actualizarEstadisticas() {
+    // Importar dinámicamente el servicio
+    import('/src/services/porra.js').then(({ obtenerEstadisticasCombate }) => {
+      const estadisticas = obtenerEstadisticasCombate(combateId);
+      const contenedor = document.querySelector(`#estadisticas-${combateId} .estadisticas-contenido`);
+      
+      if (!contenedor) return;
+      
+      // Formatear porcentajes
+      const formatPorcentaje = (valor) => `${Math.round(valor)}%`;
+      
+      // Determinar si hay pronósticos
+      const hayPronosticos = estadisticas.total > 0;
+      
+      if (!hayPronosticos) {
+        contenedor.innerHTML = `
+          <p class="text-center text-theme-seashell">Aún no hay pronósticos para este combate.</p>
+        `;
+        return;
+      }
+      
+      // Actualizar contenido con los datos actuales
+      contenedor.innerHTML = `
+        <div>
+          <p class="text-center text-theme-seashell mb-4">
+            <span class="font-bold">${estadisticas.total}</span> ${estadisticas.total === 1 ? 'persona ha votado' : 'personas han votado'}
+          </p>
+          
+          <!-- Porcentajes de victoria -->
+          <div class="mb-6">
+            <h4 class="text-theme-seashell font-bold mb-2">¿Quién ganará?</h4>
+            
+            <div class="flex justify-between text-sm text-theme-seashell mb-1">
+              <span>${luchador1.name}</span>
+              <span>${luchador2.name}</span>
+            </div>
+            
+            <div class="relative h-8 bg-gray-800 rounded-full overflow-hidden">
+              <!-- Barra del luchador 1 -->
+              <div 
+                class="absolute left-0 top-0 h-full bg-theme-turquoise"
+                style="width: ${estadisticas.ganadores[luchador1.id] || 0}%"
+              ></div>
+              
+              <!-- Barra del luchador 2 -->
+              <div 
+                class="absolute right-0 top-0 h-full bg-theme-tickle-me-pink"
+                style="width: ${estadisticas.ganadores[luchador2.id] || 0}%"
+              ></div>
+              
+              <!-- Porcentajes -->
+              <div class="absolute inset-0 flex justify-center items-center">
+                <span class="text-white font-bold text-sm">
+                  ${formatPorcentaje(estadisticas.ganadores[luchador1.id] || 0)} vs ${formatPorcentaje(estadisticas.ganadores[luchador2.id] || 0)}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Métodos de victoria y rondas -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Métodos de victoria -->
+            <div>
+              <h4 class="text-theme-seashell font-bold mb-2">Método de victoria</h4>
+              
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-theme-seashell">KO / TKO</span>
+                  <div class="flex items-center">
+                    <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                      <div class="h-full bg-theme-turquoise" style="width: ${estadisticas.metodos['ko'] || 0}%"></div>
+                    </div>
+                    <span class="text-theme-seashell">${formatPorcentaje(estadisticas.metodos['ko'] || 0)}</span>
+                  </div>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                  <span class="text-theme-seashell">Decisión</span>
+                  <div class="flex items-center">
+                    <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                      <div class="h-full bg-theme-turquoise" style="width: ${estadisticas.metodos['decision'] || 0}%"></div>
+                    </div>
+                    <span class="text-theme-seashell">${formatPorcentaje(estadisticas.metodos['decision'] || 0)}</span>
+                  </div>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                  <span class="text-theme-seashell">Descalificación</span>
+                  <div class="flex items-center">
+                    <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                      <div class="h-full bg-theme-turquoise" style="width: ${estadisticas.metodos['descalificacion'] || 0}%"></div>
+                    </div>
+                    <span class="text-theme-seashell">${formatPorcentaje(estadisticas.metodos['descalificacion'] || 0)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Rondas -->
+            <div>
+              <h4 class="text-theme-seashell font-bold mb-2">Ronda de finalización</h4>
+              
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-theme-seashell">Ronda 1</span>
+                  <div class="flex items-center">
+                    <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                      <div class="h-full bg-theme-turquoise" style="width: ${estadisticas.rondas['1'] || 0}%"></div>
+                    </div>
+                    <span class="text-theme-seashell">${formatPorcentaje(estadisticas.rondas['1'] || 0)}</span>
+                  </div>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                  <span class="text-theme-seashell">Ronda 2</span>
+                  <div class="flex items-center">
+                    <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                      <div class="h-full bg-theme-turquoise" style="width: ${estadisticas.rondas['2'] || 0}%"></div>
+                    </div>
+                    <span class="text-theme-seashell">${formatPorcentaje(estadisticas.rondas['2'] || 0)}</span>
+                  </div>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                  <span class="text-theme-seashell">Ronda 3</span>
+                  <div class="flex items-center">
+                    <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                      <div class="h-full bg-theme-turquoise" style="width: ${estadisticas.rondas['3'] || 0}%"></div>
+                    </div>
+                    <span class="text-theme-seashell">${formatPorcentaje(estadisticas.rondas['3'] || 0)}</span>
+                  </div>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                  <span class="text-theme-seashell">Todas las rondas</span>
+                  <div class="flex items-center">
+                    <div class="w-32 h-4 bg-gray-800 rounded-full mr-2 overflow-hidden">
+                      <div class="h-full bg-theme-turquoise" style="width: ${estadisticas.rondas['decision'] || 0}%"></div>
+                    </div>
+                    <span class="text-theme-seashell">${formatPorcentaje(estadisticas.rondas['decision'] || 0)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  }
+  
+  // Actualizar estadísticas cuando el DOM esté listo
+  document.addEventListener('DOMContentLoaded', actualizarEstadisticas);
+  
+  // Actualizar cuando se vuelve a la página
+  document.addEventListener('astro:page-load', actualizarEstadisticas);
+  document.addEventListener('astro:after-swap', actualizarEstadisticas);
+  
+  // Actualizar cuando se envía un nuevo pronóstico
+  document.addEventListener('pronostico:actualizado', actualizarEstadisticas);
+</script>

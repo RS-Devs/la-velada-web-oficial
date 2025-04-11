@@ -1,7 +1,33 @@
-<section class="relative flex min-h-screen w-full">
+---
+interface Props {
+  customGradient?: string;
+}
+
+const { customGradient = "from-black/70 via-black/60 to-black/70" } = Astro.props;
+---
+
+<section class="relative flex w-full">
   <div
-    class="mask-fade-bottom absolute inset-0 w-full bg-[url('/images/hero.avif')] bg-cover bg-center h-screen"
+    class="fixed inset-0 w-full bg-[url('/images/hero.avif')] bg-cover bg-center bg-fixed"
   >
-  <slot />
+    <!-- Mejoramos la visibilidad del contenido -->
+    <div class={`absolute inset-0 bg-gradient-to-b ${customGradient}`}></div>
+  </div>
+  <div class="relative z-10 w-full">
+    <slot />
   </div>
 </section>
+
+<style>
+  /* Aseguramos que la imagen de fondo cubra el contenido pero no toda la página */
+  section {
+    min-height: auto; /* Cambiado de 100vh para que no fuerce altura completa */
+    isolation: isolate;
+    padding-bottom: 2rem; /* Espacio antes de los patrocinadores */
+  }
+  
+  /* Fijamos el fondo para mejor experiencia de scroll */
+  .bg-fixed {
+    background-attachment: fixed;
+  }
+</style>
